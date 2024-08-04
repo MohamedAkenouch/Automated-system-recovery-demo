@@ -3,9 +3,9 @@ pipeline {
 
     environment {
         MONGO_DB_URI = 'mongodb://localhost:27017/recovery-db'
-        JENKINS_PROCESS_API_URL = 'http://localhost:8090/recovery-process-pipeline/job/<job-name>/build'
-        JENKINS_AUTH = '1154c6b453cc7438b944d45d702386c0d3'
-        JENKINS_CRUMB = '5074834272be350d5e30cab2a26588254b69929f91dd5f872646bf784b4b604f'
+        JENKINS_PROCESS_API_URL = 'http://localhost:8090/recovery-process-pipeline/job/process-recovery-system/build'
+        JENKINS_AUTH = '11316aec32abeb92629dc71a3631310dc'
+        JENKINS_CRUMB = '7adc92971ffaf7bf783c247134b82788a6253683c614a2cd5cf476926e1c9f06'
     }
 
     stages {

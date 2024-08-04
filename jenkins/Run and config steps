@@ -6,7 +6,6 @@ getent group docker
 # Build the docker image
 docker build -t jenkins-docker:latest .
 
-
 # Run the container
 docker run -d --name jenkins-docker \
   -p 8080:8080 \
@@ -19,3 +18,11 @@ docker run -d --name jenkins-docker \
 # on the terminal access the password
 docker exec -it jenkins-docker /bin/bash
 cat /var/jenkins_home/secrets/initialAdminPassword
+
+# Creaet and api auth token from jenkins ui
+# Dashboard > Manage Jenkins > Users > select ur user > create API token
+
+# Get Crumb token
+curl -u username:api_token 'http://jenkins-server/crumbIssuer/api/json'
+
+#replace credentials on the jenkinsfile of the recovery system
