@@ -37,7 +37,11 @@ pipeline {
         stage('Build and Deploy') {
             steps {
                 dir("recovery-system") {
-                    sh 'docker network create shared_network'
+                    def networkExists = sh(script: 'docker network ls --filter name=shared_network -q', returnStdout: true).trim()
+
+                    if (!networkExists) {
+                        sh 'docker network create shared_network'
+                    }
 
                     sh 'docker-compose up -d --build'
 
