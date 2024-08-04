@@ -23,7 +23,7 @@ services:
       - shared_network
 
   zookeeper:
-    image: wurstmeister/zookeeper:3.7.0
+    image: zookeeper:latest
     container_name: zookeeper
     ports:
       - "2181:2181"
