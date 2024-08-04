@@ -1,0 +1,32 @@
+# Ignore the build output
+client-app/target/
+recovery-system/target/
+recovery-system/terraform/.terraform/
+
+# Ignore IDE-specific files
+*.idea/
+*.iml
+*.classpath
+*.project
+*.settings/
+
+# Ignore Maven and Gradle wrapper files
+client-app/.mvn/
+client-app/.gradle/
+recovery-system/.mvn/
+recovery-system/.gradle/
+client-app/.gradle/
+client-app/build/
+recovery-system/build/
+client-app/*.log
+recovery-system/*.log
+
+# Ignore Docker files
+**/Dockerfile
+**/docker-compose.yml
+
+# Ignore temporary files
+*.tmp
+*.swp
+*.swo
+*.DS_Store

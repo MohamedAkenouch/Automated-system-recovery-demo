@@ -1,0 +1,84 @@
+pipeline {
+    agent {
+        docker {
+            image 'your-docker-repo/your-docker-image:latest'
+            label 'docker-agent'
+        }
+    }
+
+    environment {
+        TF_DIR = '/app/terraform'
+        API_URL = 'http://localhost:8081/api/replay'
+    }
+
+    parameters {
+        string(name: 'DB_ENGINE', description: 'Database Docker image')
+        string(name: 'DB_NAME', description: 'Database name')
+        string(name: 'DB_USER', description: 'Database user')
+        string(name: 'DB_PASSWORD', description: 'Database password')
+        string(name: 'DB_PORT', description: 'Database port')
+    }
+
+    stages {
+        stage('Provision Infrastructure') {
+            steps {
+                script {
+                    dir("${env.TF_DIR}") {
+                        sh 'terraform init'
+                        def tfOutput = sh(script: '''
+                            terraform apply -auto-approve \
+                                -var db_image=${params.DB_ENGINE} \
+                                -var db_name=${params.DB_NAME} \
+                                -var db_user=${params.DB_USER} \
+                                -var db_password=${params.DB_PASSWORD} \
+                                -var db_port=${params.DB_PORT} \
+                                -json
+                        ''', returnStdout: true).trim()
+
+                        def output = readJSON(text: tfOutput)
+                        env.DB_URL = output["outputs"]["db_url"]["value"]
+                        env.DB_CONTAINER_NAME = output["outputs"]["db_container_name"]["value"]
+                    }
+                }
+            }
+        }
+        stage('Run Database Backup') {
+            steps {
+                script {
+                    sh """
+                        docker cp $(ls -t /backups/${params.DB_NAME}/backup_*.sql | head -n 1) ${env.DB_CONTAINER_NAME}:/tmp/backup.sql
+                    """
+
+                    sh """
+                        docker exec -i ${env.DB_CONTAINER_NAME} bash -c "PGPASSWORD=${params.DB_PASSWORD} psql -U ${params.DB_USER} -d ${params.DB_NAME} -f /tmp/backup.sql"
+                    """
+                }
+            }
+        }
+        stage('Replay API') {
+            steps {
+                script {
+                    def response = sh(script: """
+                        curl -X POST ${env.API_URL} \
+                        -H "Content-Type: application/json" \
+                        -d '{"url": "${env.DB_URL}", "user": "${params.DB_USER}", "password": "${params.DB_PASSWORD}"}'
+                    """, returnStdout: true).trim()
+
+                    echo "API Response: ${response}"
+                }
+            }
+        }
+        stage('Echo Database Info') {
+            steps {
+                script {
+                    echo "Database Information:"
+                    echo "Database URL: ${env.DB_URL}"
+                    echo "Database Container Name: ${env.DB_CONTAINER_NAME}"
+                    echo "Database Name: ${params.DB_NAME}"
+                    echo "Database User: ${params.DB_USER}"
+                    echo "Database Password: ${params.DB_PASSWORD}"
+                }
+            }
+        }
+    }
+}

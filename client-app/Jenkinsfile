@@ -1,0 +1,70 @@
+pipeline {
+    agent any
+
+    environment {
+        SPRING_DATASOURCE_URL = 'jdbc:postgresql://localhost:5432/client'
+        SPRING_DATASOURCE_USERNAME = 'admin'
+        SPRING_DATASOURCE_PASSWORD = 'admin'
+        DB_NAME = 'client'
+        REMOTE_TYPE = 'container'
+        REMOTE_STORE_IDENTIFIER = 'recovery-app'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Config app') {
+            steps {
+                script {
+                    dir("client-app") {
+                        def envVars = [
+                            "SPRING_DATASOURCE_URL=${env.SPRING_DATASOURCE_URL}",
+                            "SPRING_DATASOURCE_USERNAME=${env.SPRING_DATASOURCE_USERNAME}",
+                            "SPRING_DATASOURCE_PASSWORD=${env.SPRING_DATASOURCE_PASSWORD}",
+                            "DB_NAME=${env.DB_NAME}",
+                            "REMOTE_TYPE=${env.REMOTE_TYPE}",
+                            "REMOTE_STORE_IDENTIFIER=${env.REMOTE_STORE_IDENTIFIER}"
+                        ]
+
+                        // Write env vars to a file
+                        writeFile file: '.env', text: envVars.join("\n")
+                    }
+
+                }
+            }
+        }
+
+        stage('Build and Deploy') {
+            steps {
+                dir("client-app") {
+                    // Run docker-compose
+                    sh 'docker-compose up -d --build'
+
+                    sh 'docker push mohamedakenouch/recovery-system/client-app:latest'
+                }
+
+            }
+        }
+
+        stage('Configure Debezium Connector') {
+            steps {
+                script {
+                    dir("client-app") {
+                        // Wait for Debezium to be ready
+                        sleep(time: 30, unit: 'SECONDS')
+
+                        // Configure Debezium connector
+                        sh """
+                        curl -X POST -H "Content-Type: application/json" --data @debezium-postgres-source.json http://localhost:8083/connectors
+                        """
+                    }
+
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,50 @@
+pipeline {
+    agent any
+
+    environment {
+        MONGO_DB_URI = 'mongodb://localhost:27017/recovery-db'
+        JENKINS_PROCESS_API_URL = 'http://localhost:8090/recovery-process-pipeline/job/<job-name>/build'
+        JENKINS_AUTH = '1154c6b453cc7438b944d45d702386c0d3'
+        JENKINS_CRUMB = '5074834272be350d5e30cab2a26588254b69929f91dd5f872646bf784b4b604f'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Config app') {
+            steps {
+                script {
+                    dir("recovery-system") {
+                        def envVars = [
+                            "MONGO_DB_URI=${env.MONGO_DB_URI}",
+                            "JENKINS_PROCESS_API_URL=${env.JENKINS_PROCESS_API_URL}",
+                            "JENKINS_AUTH=${env.JENKINS_AUTH}",
+                            "JENKINS_CRUMB=${env.JENKINS_CRUMB}"
+                        ]
+
+                        // Write env vars to a file
+                        writeFile file: '.env', text: envVars.join("\n")
+                    }
+
+                }
+            }
+        }
+
+        stage('Build and Deploy') {
+            steps {
+                dir("recovery-system") {
+                    sh 'docker network create shared_network'
+
+                    sh 'docker-compose up -d --build'
+
+                    sh 'docker push mohamedakenouch/recovery-system/recovery-app:latest'
+                }
+
+            }
+        }
+    }
+}
