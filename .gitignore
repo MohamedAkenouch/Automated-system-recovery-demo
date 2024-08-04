@@ -21,10 +21,6 @@ recovery-system/build/
 client-app/*.log
 recovery-system/*.log
 
-# Ignore Docker files
-**/Dockerfile
-**/docker-compose.yml
-
 # Ignore temporary files
 *.tmp
 *.swp

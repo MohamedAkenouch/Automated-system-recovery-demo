@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:13
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - shared_network
+
+  client-app:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    networks:
+      - shared_network
+
+  debezium:
+    image: debezium/connect:latest
+    container_name: debezium
+    depends_on:
+      - postgres
+    ports:
+      - "8083:8083"
+    environment:
+      - BOOTSTRAP_SERVERS=localhost:9092
+      - GROUP_ID=recovery-group
+      - CONFIG_STORAGE_TOPIC=connect_configs
+      - OFFSET_STORAGE_TOPIC=connect_offsets
+      - STATUS_STORAGE_TOPIC=connect_statuses
+    volumes:
+      - debezium_data:/kafka/connect
+    networks:
+      - shared_network
+
+volumes:
+  postgres_data:
+  debezium_data:
+
+networks:
+  shared_network:
+    external: true
