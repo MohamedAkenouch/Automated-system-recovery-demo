@@ -28,6 +28,9 @@ pipeline {
 
                         // Write env vars to a file
                         writeFile file: '.env', text: envVars.join("\n")
+
+                        // Verify the .env file is created
+                        sh 'cat .env'
                     }
 
                 }
