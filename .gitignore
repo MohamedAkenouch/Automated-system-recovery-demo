@@ -15,7 +15,6 @@ client-app/.mvn/
 client-app/.gradle/
 recovery-system/.mvn/
 recovery-system/.gradle/
-client-app/.gradle/
 client-app/build/
 recovery-system/build/
 client-app/*.log
