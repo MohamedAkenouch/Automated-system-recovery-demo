@@ -1,0 +1,21 @@
+#Get the following command on your WSL2 distributions
+getent group docker
+
+# You going to get the Group id of docker replace it on the Dockerfile
+
+# Build the docker image
+docker build -t jenkins-docker:latest .
+
+
+# Run the container
+docker run -d --name jenkins-docker \
+  -p 8080:8080 \
+  -p 50000:50000 \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v jenkins_home:/var/jenkins_home \
+  jenkins-docker:latest
+
+# Add admin password
+# on the terminal access the password
+docker exec -it jenkins-docker /bin/bash
+cat /var/jenkins_home/secrets/initialAdminPassword
